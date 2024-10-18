@@ -1,2 +1,4 @@
 # Langford-s-Problem
-All implementations to solve Langford's Problem i have developpped
+Here are all the implementations I have developed to solve Langford's Problem.
+
+Langfordv1: Sequential, unoptimized solution.
