@@ -1,7 +1,7 @@
 /**
  * Algorithme de Langford
  * @author Clément Jourd'heuil
- * @version 2.0
+ * @version 1.0
  */
 
 #include "langford.h"
