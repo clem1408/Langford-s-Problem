@@ -9,7 +9,7 @@
 #include "stdlib.h"
 #include <time.h>
 
-#define N 15
+#define N 12
 
 void init(langford_t *langford)
 {

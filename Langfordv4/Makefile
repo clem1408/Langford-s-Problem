@@ -5,7 +5,7 @@
 
 EXEC = main
 OBJECTS = 
-PROJECT_NAME = Langfordv3
+PROJECT_NAME = Langfordv4
 
 #
 # SUFFIXES
@@ -46,6 +46,17 @@ all: msg $(OBJECTS) $(EXEC_O)
 	$(CC) $$i.cpp -o $$i $(OBJECTS) $(CCLIBS); \
 	done
 	@echo "Done."
+
+
+omp: msg $(OBJECTS) $(EXEC_O)
+
+	@echo "Compilation avec OpenMP"
+	@echo "Create executables..."
+	@for i in $(EXEC); do \
+	$(CC) $$i.cpp -o $$i $(OBJECTS) $(CCLIBS) -fopenmp; \
+	done
+	@echo "Done."
+
 
 msg:
 	@echo "Create objects..."
