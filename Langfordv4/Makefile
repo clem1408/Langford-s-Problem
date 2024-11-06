@@ -1,108 +1,30 @@
-#
-# MAIN CONFIGURATION
-# Author makefile : Cyril Rabat
-#
+# Nom de l'exécutable
+TARGET = main
 
-EXEC = main
-OBJECTS = 
-PROJECT_NAME = Langfordv4
+# Compilateur
+CXX = g++
 
-#
-# SUFFIXES
-#
+# Options de compilation
+CXXFLAGS = -Wall -Wextra -O3 -std=c++17 -fopenmp
 
-.SUFFIXES: .cpp .o
+# Fichiers sources et objets
+SRCS = main.cpp
+OBJS = $(SRCS:.cpp=.o)
 
-#
-# OBJECTS
-#
+# Règle par défaut : compile l'exécutable
+all: $(TARGET)
 
-EXEC_O = $(EXEC:=.o)
-OBJECTS_O = $(OBJECTS) $(EXEC_O)
+# Règle pour créer l'exécutable
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 
+# Règle pour compiler les fichiers .cpp en .o
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-#
-# ARGUMENTS AND COMPILER
-#
-
-CC = g++
-CCFLAGS_STD = -Wall -Werror -O3
-CCFLAGS_DEBUG = -D _DEBUG_
-CCFLAGS = $(CCFLAGS_STD)
-CCLIBS = 
-
-
-
-
-#
-# RULES
-# $(CC) -o $$i $$i.o $(OBJECTS) $(CCLIBS); \
-
-all: msg $(OBJECTS) $(EXEC_O)
-
-	@echo "Compilation par defaut"
-	@echo "Create executables..."
-	@for i in $(EXEC); do \
-	$(CC) $$i.cpp -o $$i $(OBJECTS) $(CCLIBS); \
-	done
-	@echo "Done."
-
-
-omp: msg $(OBJECTS) $(EXEC_O)
-
-	@echo "Compilation avec OpenMP"
-	@echo "Create executables..."
-	@for i in $(EXEC); do \
-	$(CC) $$i.cpp -o $$i $(OBJECTS) $(CCLIBS) -fopenmp; \
-	done
-	@echo "Done."
-
-
-msg:
-	@echo "Create objects..."
-
-debug: CCFLAGS = $(CCFLAGS_STD) $(CCFLAGS_DEBUG)
-debug: all
-
-#
-# DEFAULT RULES
-#
-
-%.o : %.c
-	@cd $(dir $<) && ${CC} ${CCFLAGS} -c $(notdir $<) -o $(notdir $@)
-
-#
-# GENERAL RULES
-#
-
+# Règle pour nettoyer les fichiers compilés
 clean:
-	@echo "Delete objects, temporary files..."
-	@rm -f $(OBJECTS) $(EXEC_O)
-	@rm -f *~ *#
-	@rm -f $(EXEC)
-	@rm -f dependancies
-	@echo "Done."
+	rm -f $(OBJS) $(TARGET)
 
-depend:
-	@echo "Create dependancies..."
-	@sed -e "/^# DEPENDANCIES/,$$ d" makefile > dependancies
-	@echo "# DEPENDANCIES" >> dependancies
-	@for i in $(OBJECTS_O); do \
-	$(CC) -MM -MT $$i $(CCFLAGS) `echo $$i | sed "s/\(.*\)\\.o$$/\1.c/"` >> dependancies; \
-	done
-	@cat dependancies > makefile
-	@rm dependancies
-	@echo "Done."
-
-#
-# CREATE ARCHIVE
-#
-
-ARCHIVE_FILES = *
-
-archive: clean
-	@echo "Create archive $(PROJECT_NAME)_$(shell date '+%y%m%d.tar.gz')..."
-	@REP=`basename "$$PWD"`; cd .. && tar zcf $(PROJECT_NAME)_$(shell date '+%y%m%d.tar.gz') $(addprefix "$$REP"/,$(ARCHIVE_FILES))
-	@echo "Done."
-
-# DEPENDANCIES
+# Phony targets pour éviter des conflits avec des fichiers du même nom
+.PHONY: all clean

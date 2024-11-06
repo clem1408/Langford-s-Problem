@@ -5,7 +5,7 @@
 #include <vector>
 
 #define N 15
-#define DEPTH 3
+#define DEPTH 1
 
 // Génère le tableau des positions maximales
 inline std::vector<int> generateMaxPosTab(int n) {
@@ -33,7 +33,7 @@ void generateCombinations(int depth, const std::vector<int> &max_pos_tab,
 
   while (true) {
     std::unordered_set<int> uniqueValues(indices.begin(), indices.end());
-    bool isValid = (uniqueValues.size() == depth);
+    bool isValid = ((int)uniqueValues.size() == depth);
     bool isValid2 = true;
 
     for (int i = 0; i < depth && isValid; ++i) {
