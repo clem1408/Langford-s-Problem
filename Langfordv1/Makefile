@@ -1,10 +1,33 @@
-CC = gcc
-CFLAGS = -std=c99 -Wall -Wextra -O3 -fopenmp
+# Makefile for main.cpp
 
-main: main.o langford.o
-	$(CC) $(CFLAGS) -o $@ $< langford.o
+# Compiler and flags
+CXX := gcc
+CXXFLAGS := -Wall -Wextra -Ofast -std=c17 -L/libm-install-dir/lib -lm
+LDFLAGS := -ltbb  # Link the Intel TBB library
 
-main.o: main.c langford.h
+# Target executable
+TARGET := main
 
+# Source files
+SRC := main.c langford.c
+
+# Object files
+OBJ := $(SRC:.cpp=.o)
+
+# Default target to build the executable
+all: $(TARGET)
+
+# Rule to link the executable
+$(TARGET): $(OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# Rule to compile source files to object files
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Clean up build files
 clean:
-	rm -f main *.o
+	rm -f $(OBJ) $(TARGET)
+
+# Phony targets (to avoid conflicts with file names)
+.PHONY: all clean

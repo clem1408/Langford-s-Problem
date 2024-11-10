@@ -4,13 +4,8 @@
 #include <unordered_set>
 #include <vector>
 
-<<<<<<< HEAD
 #define N 16
 #define DEPTH 3
-=======
-#define N 15
-#define DEPTH 1
->>>>>>> cc7eb6160841baafd80b0e44f56113ae711be90b
 
 // Génère le tableau des positions maximales
 inline std::vector<int> generateMaxPosTab(int n) {
