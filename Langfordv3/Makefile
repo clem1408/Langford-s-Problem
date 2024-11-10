@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Makefile for main.cpp
 
 # Compiler and flags
@@ -32,35 +31,3 @@ clean:
 
 # Phony targets (to avoid conflicts with file names)
 .PHONY: all clean
-=======
-# Nom de l'exécutable
-TARGET = main
-
-# Compilateur
-CXX = g++
-
-# Options de compilation
-CXXFLAGS = -Wall -Wextra -O3 -std=c++17
-
-# Fichiers sources et objets
-SRCS = main.cpp
-OBJS = $(SRCS:.cpp=.o)
-
-# Règle par défaut : compile l'exécutable
-all: $(TARGET)
-
-# Règle pour créer l'exécutable
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
-
-# Règle pour compiler les fichiers .cpp en .o
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# Règle pour nettoyer les fichiers compilés
-clean:
-	rm -f $(OBJS) $(TARGET)
-
-# Phony targets pour éviter des conflits avec des fichiers du même nom
-.PHONY: all clean
->>>>>>> cc7eb6160841baafd80b0e44f56113ae711be90b
