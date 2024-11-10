@@ -4,8 +4,8 @@
 #include <omp.h>
 #include <time.h>
 
-#define N 15  
-#define DEPTH 5
+#define N 16
+#define DEPTH 3
 
 // Génère le tableau des positions maximales
 inline std::vector<int> generateMaxPosTab(int n) {

@@ -1,10 +1,11 @@
 #include <iostream>
 #include <vector>
+#include <array>
 #include <unordered_set>
-#include <time.h>
+#include <ctime>
 
-#define N 12
-#define DEPTH 5
+#define N 15
+#define DEPTH 3
 
 // Génère le tableau des positions maximales
 inline std::vector<int> generateMaxPosTab(int n) {
@@ -25,16 +26,13 @@ inline std::vector<int> generateMaxPosTab(int n) {
 }
 
 // Génère les combinaisons possibles jusqu'à une profondeur donnée et les stocke
-void generateCombinations(int depth, const std::vector<int>& max_pos_tab, int& count, std::vector<std::vector<int>>& solutions) {
+void generateCombinations(int depth, const std::vector<int>& max_pos_tab, int& count, std::vector<std::array<int, N>>& solutions) {
     std::vector<int> indices(depth, 1); // Indices de chaque position initialisés à 1
-
-    int k = 1;
 
     while (true) {
         // Vérifie si la combinaison actuelle est consistante (sans doublons)
         std::unordered_set<int> uniqueValues(indices.begin(), indices.end());
         bool isValid = (uniqueValues.size() == depth);
-        //std::cout << "uniqueValues : " << uniqueValues.size() << std::endl;
         bool isValid2 = true;
 
         // Vérifie la contrainte de max_pos_tab pour chaque position
@@ -45,23 +43,23 @@ void generateCombinations(int depth, const std::vector<int>& max_pos_tab, int& c
             }
         }
 
-        if(isValid){
-          std::vector<int> general_tab(2 * N, 0);
+        if (isValid) {
+            std::array<int, 2 * N> general_tab = {0};
           
-          for( int i = N - DEPTH; i < N; ++i){
-            if(general_tab[indices[i - (N - DEPTH)] - 1] == 0 && general_tab[indices[i - (N - DEPTH)] + i + 1] == 0){
-              general_tab[indices[i - (N - DEPTH)] - 1] = i + 1;
-              general_tab[indices[i - (N - DEPTH)] + i + 1] = i + 1;
-            }else{
-              isValid2 = false;
-              break;
+            for (int i = N - DEPTH; i < N; ++i) {
+                if (general_tab[indices[i - (N - DEPTH)] - 1] == 0 && general_tab[indices[i - (N - DEPTH)] + i + 1] == 0) {
+                    general_tab[indices[i - (N - DEPTH)] - 1] = i + 1;
+                    general_tab[indices[i - (N - DEPTH)] + i + 1] = i + 1;
+                } else {
+                    isValid2 = false;
+                    break;
+                }
             }
-          }
         }
 
         if (isValid && isValid2) {
             // Initialise une solution remplie de zéros
-            std::vector<int> solution(N, 0);
+            std::array<int, N> solution = {0};
 
             // Remplit seulement les éléments de l'indice N - DEPTH jusqu'à N
             for (int i = 0; i < depth; ++i) {
@@ -90,117 +88,93 @@ void generateCombinations(int depth, const std::vector<int>& max_pos_tab, int& c
     }
 }
 
-inline void show_langford(std::vector<int>& langford, std::vector<int>& general_tab)
-{
-  for (auto it = general_tab.begin(); it != general_tab.end(); ++it){
-    std::cout << *it << " ";
-  }std::cout << std::endl;
-
-  for (auto it = langford.begin(); it != langford.end(); ++it){
-    std::cout << *it << " ";
-  }std::cout << std::endl;
-}
-
-inline void remove_pair(std::vector<int>& langford, std::vector<int>& general_tab, int pair)
-{
-  general_tab[langford[pair - 1] - 1] = 0;
-  general_tab[langford[pair - 1] + pair] = 0;
-  langford[pair - 1] = 0;
-}
-
-inline int place_pair(std::vector<int>& langford, const std::vector<int>& max_pos_tab, std::vector<int>& general_tab, int pair)
-{
-  // Initialisation de i, selon si la paire est déjà placé ou non
-  int i = (langford[pair - 1] != 0) ? langford[pair - 1] + 1 : 1;
-
-  // Si la paire est déjà placée, on la retire
-  if (langford[pair - 1] != 0)
-  {
-    remove_pair(langford, general_tab, pair);
-  }
-
-  // Parcourir les positions possibles pour la paire
-  for (; i <= max_pos_tab[pair - 1]; i++)
-  {
-    int second_pos = i + pair; // Pré-calculer la seconde position
-    if (general_tab[i - 1] == 0 && general_tab[second_pos] == 0)
-    {
-      general_tab[i - 1] = pair;
-      general_tab[second_pos] = pair;
-      langford[pair - 1] = i;
-      return 1; // Placement valide
+inline void show_langford(std::array<int, N>& langford, std::array<int, 2 * N>& general_tab) {
+    for (auto it = general_tab.begin(); it != general_tab.end(); ++it){
+        std::cout << *it << " ";
     }
-  }
+    std::cout << std::endl;
 
-  return 0; // Aucun emplacement valide trouvé
+    for (auto it = langford.begin(); it != langford.end(); ++it){
+        std::cout << *it << " ";
+    }
+    std::cout << std::endl;
 }
 
-inline void init_general_tab(std::vector<int>& langford, std::vector<int>& general_tab){
-    for (int i = N - DEPTH; i < N;i++){
+inline void remove_pair(std::array<int, N>& langford, std::array<int, 2 * N>& general_tab, int pair) {
+    general_tab[langford[pair - 1] - 1] = 0;
+    general_tab[langford[pair - 1] + pair] = 0;
+    langford[pair - 1] = 0;
+}
+
+inline int place_pair(std::array<int, N>& langford, const std::vector<int>& max_pos_tab, std::array<int, 2 * N>& general_tab, int pair) {
+    int i = (langford[pair - 1] != 0) ? langford[pair - 1] + 1 : 1;
+
+    if (langford[pair - 1] != 0) {
+        remove_pair(langford, general_tab, pair);
+    }
+
+    for (; i <= max_pos_tab[pair - 1]; i++) {
+        int second_pos = i + pair;
+        if (general_tab[i - 1] == 0 && general_tab[second_pos] == 0) {
+            general_tab[i - 1] = pair;
+            general_tab[second_pos] = pair;
+            langford[pair - 1] = i;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+inline void init_general_tab(std::array<int, N>& langford, std::array<int, 2 * N>& general_tab) {
+    for (int i = N - DEPTH; i < N; i++) {
         general_tab[langford[i] - 1] = i + 1;
         general_tab[langford[i] + i + 1] = i + 1;
     }
 }
 
-inline void langford_algorithm(std::vector<int>& langford, const std::vector<int>& max_pos_tab, int &count2)
-{
-  int level = N - DEPTH;
+inline void langford_algorithm(std::array<int, N>& langford, const std::vector<int>& max_pos_tab, int &count2) {
+    int level = N - DEPTH;
+    std::array<int, 2 * N> general_tab = {0};
 
-  std::vector<int> general_tab(2 * N, 0);
+    init_general_tab(langford, general_tab);
 
-  init_general_tab(langford, general_tab);
-
-  while (level <= N - DEPTH)
-  {
-    if (place_pair(langford, max_pos_tab, general_tab, level)) // Si placement de la paire valide
-    {
-      if (level == 1) // Si on arrive à placer le 1 (combinaison valide)
-      {
-        count2++;
-        remove_pair(langford, general_tab, 1);
-      }
-      else // Sinon on continue de descendre
-      {
-        level--;
-        continue;
-      }
+    while (level <= N - DEPTH) {
+        if (place_pair(langford, max_pos_tab, general_tab, level)) {
+            if (level == 1) {
+                count2++;
+                remove_pair(langford, general_tab, 1);
+            } else {
+                level--;
+                continue;
+            }
+        }
+        level++;
     }
-    level++; // On remonte
-  }
 }
 
 int main() {
-    int count = 0, count2 = 0; // Compteur de solutions
-    std::vector<int> max_pos_tab = generateMaxPosTab(N); // Génère max_pos_tab
-    std::vector<std::vector<int>> solutions; // Stocke toutes les solutions trouvées
-    
-    // Variable pour calculer le temps d'execution
-    clock_t start, stop, mid_time; 
-    double CPU_time, total; 
+    int count = 0, count2 = 0;
+    std::vector<int> max_pos_tab = generateMaxPosTab(N);
+    std::vector<std::array<int, N>> solutions;
+
+    clock_t start, stop;
+    double CPU_time; 
+
+    std::cout << "N: " << N << "\nDEPTH: " << DEPTH << std::endl;
 
     start = clock();
-
-    // Génère toutes les combinaisons possibles jusqu'à la profondeur spécifiée
     generateCombinations(DEPTH, max_pos_tab, count, solutions);
-    
-    // Affiche toutes les solutions stockées
+    std::cout << "Nombre total de tâches: " << count << std::endl;
+
     for (auto& solution : solutions) {
         langford_algorithm(solution, max_pos_tab, count2);
     }
 
     stop = clock();
-    total = (double)stop - start;
-    CPU_time = total / CLOCKS_PER_SEC;
-
-    std::cout << "N: " << N << std::endl;
-    std::cout << "DEPTH: " << DEPTH << std::endl;
+    CPU_time = double(stop - start) / CLOCKS_PER_SEC;
 
     printf("Time : %lf seconds\n", CPU_time);
-
-    // Affiche le nombre total de tâches
-    std::cout << "Nombre total de tâches: " << count << std::endl;
-
-    // Affiche le nombre total de solutions
     std::cout << "Nombre total de solutions: " << count2 << std::endl;
 
     return 0;
