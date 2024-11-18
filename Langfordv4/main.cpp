@@ -4,7 +4,7 @@
 #include <unordered_set>
 #include <vector>
 
-#define N 15
+#define N 19
 #define DEPTH 3
 
 // Génère le tableau des positions maximales

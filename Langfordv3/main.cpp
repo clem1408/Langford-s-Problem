@@ -5,8 +5,8 @@
 #include <unordered_set>
 #include <ctime>
 
-#define N 12
-#define DEPTH 3
+#define N 16
+#define DEPTH 6
 
 inline std::vector<int> generateMaxPosTab(int n) {
   std::vector<int> max_pos_tab(n);
@@ -32,7 +32,7 @@ void generateCombinations(int depth, const std::vector<int>& max_pos_tab, int& c
     while (true) {
         // Vérifie si la combinaison actuelle est consistante (sans doublons)
         std::unordered_set<int> uniqueValues(indices.begin(), indices.end());
-        bool isValid = (uniqueValues.size() == depth);
+        bool isValid = ((int)uniqueValues.size() == depth);
         bool isValid2 = true;
 
         // Vérifie la contrainte de max_pos_tab pour chaque position
@@ -168,9 +168,15 @@ int main() {
     generateCombinations(DEPTH, max_pos_tab, count, solutions);
     std::cout << "Nombre total de tâches: " << count << std::endl;
 
-    for (auto& solution : solutions) {
-        langford_algorithm(solution, max_pos_tab, count2);
-    }
+    /*for (auto& solution : solutions) {
+        std::cout << "Task : ";
+        for (auto ind : solution){
+            std::cout << ind << " ";
+        }
+        std::cout << std::endl;
+        
+        //langford_algorithm(solution, max_pos_tab, count2);
+    }*/
 
     stop = clock();
     CPU_time = double(stop - start) / CLOCKS_PER_SEC;
