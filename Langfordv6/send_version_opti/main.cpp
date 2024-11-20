@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
     clock_t start=0, stop=0;
     double CPU_time=0; 
 
-    int nb_tache_total = 0, nb_tache_last = 0, count_local = 0, count_global = 0;
+    int nb_tache_total = 0, nb_tache_bonus = 0, count_local = 0, count_global = 0, process_bonus = 0;
     int nb_tache = 0;
     
     vector<array<int, N>> solutions_global;
@@ -203,31 +203,33 @@ int main(int argc, char* argv[]) {
     MPI_Bcast(&nb_tache_total, 1, MPI_INT, p-1, MPI_COMM_WORLD);
 
     if(nb_tache_total%p == 0){
-        nb_tache = nb_tache_total/p; // nombre des tâches pour tous les autres process
-        nb_tache_last = nb_tache; // nombre de tâches du dernier process
+        nb_tache = nb_tache_total/p; // nombre des tâches pour tous les  process
+        nb_tache_bonus = 0; // nombre de tâches du dernier process
     }
     else{
-        nb_tache = (int)(nb_tache_total/(p-1)); // nombre des tâches pour tous les autres process
-        nb_tache_last = nb_tache_total%(p-1); // nombre de tâches du dernier process
+        process_bonus = nb_tache_total%p; // nombre de process qui auront une tâche de plus
+        nb_tache = (int)(nb_tache_total/p); // nombre des tâches pour tous les  process
+        nb_tache_bonus = nb_tache+1; // nombre de tâches pour les x premier process qui ont 1 de plus
     }
     
 
     if(id==p-1){
         cout << "Nb taches: " << nb_tache << endl;
-        cout << "Nb taches last: " << nb_tache_last << endl;
+        cout << "Nb taches bonus: " << nb_tache_bonus << endl;
+        cout << "Nb process bonus: " << process_bonus << endl;
         cout << "Taille vec global: " << solutions_global.size() << endl;
         cout << "Taille vec global flat: " << solution_global_flat.size() << endl;
     }
 
 
     // init des tableaux des tâches
-    if(id != p-1){
-        solution_local_flat.resize(nb_tache*N); // Tableau de solutions local pour le send
-        solutions_local.resize(nb_tache); // Tableau de solutions local
+    if(id < process_bonus){
+        solution_local_flat.resize(nb_tache_bonus*N); // Tableau de solutions local pour le send
+        solutions_local.resize(nb_tache_bonus); // Tableau de solutions local
     }
     else{
-        solution_local_flat.resize(nb_tache_last*N); // Tableau de solutions local pour le send
-        solutions_local.resize(nb_tache_last); // Tableau de solutions local
+        solution_local_flat.resize(nb_tache*N); // Tableau de solutions local pour le send
+        solutions_local.resize(nb_tache); // Tableau de solutions local
     }
     
     cout << "[" << id << "] t sol local flat: " << solution_local_flat.size() << endl;
@@ -237,38 +239,45 @@ int main(int argc, char* argv[]) {
     // Envoi des taches aux process depuis le process p-1
     if(id == p-1){
         int k;
+        int start_send = 0;
+
         for(k=0; k<(p-1); k++){
 
             if(k < p-1){
-                MPI_Send(&solution_global_flat[k * nb_tache * N], nb_tache*N, MPI_INT, k, 0, MPI_COMM_WORLD);
+                cout << "[" << k << "] start send: " << start_send << endl; 
+
+                MPI_Send(&solution_global_flat[start_send], (k < process_bonus?nb_tache_bonus:nb_tache) * N, MPI_INT, k, 0, MPI_COMM_WORLD);
+                start_send += ((k < process_bonus?nb_tache_bonus:nb_tache) * N);
             }             
         }
 
-        copy(solution_global_flat.end() - nb_tache_last*N, solution_global_flat.end(), solution_local_flat.begin());
+        copy(solution_global_flat.end() - ((p-1) < process_bonus?nb_tache_bonus:nb_tache)*N, solution_global_flat.end(), solution_local_flat.begin());
 
 
     }
-    else{ // reception des taches des process de 0 à p-2
-        MPI_Recv(solution_local_flat.data(), nb_tache*N, MPI_INT, p-1, 0, MPI_COMM_WORLD, 0);
+    else{ // reception des taches des process 
+        MPI_Recv(solution_local_flat.data(), (id < process_bonus?nb_tache_bonus:nb_tache)*N, MPI_INT, p-1, 0, MPI_COMM_WORLD, 0);
     }
+
 
 
     cout << "[" << id << "]" << " recv, t local flat:" << solution_local_flat.size() << endl;
 
 
-    if(id != p-1){
-        for (int i = 0; i < nb_tache; ++i) {
+    if(id < process_bonus){
+        for (int i = 0; i < nb_tache_bonus; ++i) {
             copy(solution_local_flat.begin() + i * N, solution_local_flat.begin() + (i + 1) * N, solutions_local[i].begin());
         }
     }
     else{
-        for (int i = 0; i < nb_tache_last; ++i) {
+        for (int i = 0; i < nb_tache; ++i) {
             copy(solution_local_flat.begin() + i * N, solution_local_flat.begin() + (i + 1) * N, solutions_local[i].begin());
         }
     }
 
 
     cout << "[" << id << "] t sol local: " << solutions_local.size() << endl;
+
 
 
 
