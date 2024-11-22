@@ -1,0 +1,12 @@
+[package]
+name = "langford"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+arrayvec = "0.7.6"
+const_for = "0.1.5"
+cust = "0.3.2"
+rayon = "1.10.0"
+unroll = "0.1.5"
