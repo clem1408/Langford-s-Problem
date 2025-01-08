@@ -1,3 +1,5 @@
+*Collaborators : [elcald](https://github.com/ElCald) & [kakugen](https://github.com/KaKug3n)*
+
 # Langford-s-Problem
 Here are all the implementations I have developed to solve Langford's Problem.
 
