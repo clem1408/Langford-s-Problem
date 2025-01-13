@@ -3,15 +3,16 @@
 # Langford-s-Problem
 Here are all the implementations I have developed to solve Langford's Problem.
 
-Langfordv1: [Sequential], unoptimized solution. <br>
-Langfordv2: [Sequential], optimized solution. <br>
-Langfordv3: [Sequential], with task pre-initialize tasks. <br>
-Langfordv4: [Parallel], Langfordv3 with openmp. <br>
-langfordv5: [Sequential], bit version of Langford (fastest sequential version). <br>
-Langfordv6: [Parallel], Langfordv3 with mpi. <br>
-Langfordv7: [Parallel], a rust version base on buffers for each step and inline fixed size for loop to go faster by [joshua_bouchat](https://github.com/JoshuaBOUCHAT) (best time : L(16,2)= 29s). <br>
-Langfordv8: [Parallel], Langfordv5 with mpi. <br>
-Langfordv9: [Parallel], Langfordv5 with openmp. <br>
+Langfordv01: [Sequential], recursive solution (symmetries are not managed ==> double the number of solutions)
+Langfordv02: [Sequential], unoptimized solution. <br>
+Langfordv03: [Sequential], optimized solution. <br>
+Langfordv04: [Sequential], with task pre-initialize tasks. <br>
+langfordv05: [Parallel], Langfordv3 with openmp. <br>
+Langfordv06: [Sequential], bit version of Langford (fastest sequential version). <br>
+Langfordv07: [Parallel], Langfordv3 with mpi. <br>
+Langfordv08: [Parallel], a rust version base on buffers for each step and inline fixed size for loop to go faster by [joshua_bouchat](https://github.com/JoshuaBOUCHAT) (best time : L(16,2)= 29s). <br>
+Langfordv09: [Parallel], Langfordv5 with mpi. <br>
+Langfordv10: [Parallel], Langfordv5 with openmp. <br>
 
 Here's L(19,2) on my computer (i7 12700k): <br>
 ![image](https://github.com/user-attachments/assets/3ca94653-4edc-44bc-9313-49adcb1e816a)
