@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <vector>
 
-constexpr int N = 15;
+constexpr int N = 12;
 constexpr int DEPTH = 2;
 constexpr int SIZE = 2 * N;
 constexpr int MAX_STACK_SIZE = 1000000;
@@ -150,34 +150,55 @@ uint64_t langford_algorithm(const uint64_t &task) {
 
 int main() {
   uint64_t number_of_solution = 0;
-
   uint64_t number_of_tasks = numberOfTasks();
-
   vector<uint64_t> tasks(number_of_tasks);
 
-  cout << "N: " << N << "\nDEPTH: " << DEPTH << endl;
+  double task_initialization_time[5] = {0.0};
+  double algorithm_time[5] = {0.0};
+  double total_task_time = 0.0;
+  double total_algorithm_time = 0.0;
 
-  clock_t start, stop;
-  double CPU_time;
+  cout << "===== Langford de " << N << " avec une profondeur de " << DEPTH
+       << " =====" << endl
+       << endl;
 
-  uint64_t real_number_of_tasks = initTasks(tasks);
+  for (int iteration = 0; iteration < 5; ++iteration) {
+    number_of_solution = 0;
 
-  cout << "Total number of tasks: " << real_number_of_tasks << endl;
+    // Mesure du temps d'initialisation des tâches
+    clock_t start_task, stop_task;
+    start_task = clock();
+    uint64_t real_number_of_tasks = initTasks(tasks);
+    stop_task = clock();
+    task_initialization_time[iteration] =
+        double(stop_task - start_task) / CLOCKS_PER_SEC;
 
-  start = clock();
+    cout << "Execution " << iteration + 1 << ":\n";
+    cout << "  Total number of tasks: " << real_number_of_tasks << endl;
 
-  for (size_t i = 0; i < real_number_of_tasks; ++i) {
-    number_of_solution += langford_algorithm(tasks[i]);
+    // Mesure du temps d'exécution de l'algorithme principal
+    clock_t start_alg, stop_alg;
+    start_alg = clock();
+    for (size_t i = 0; i < real_number_of_tasks; ++i) {
+      number_of_solution += langford_algorithm(tasks[i]);
+    }
+    stop_alg = clock();
+    algorithm_time[iteration] = double(stop_alg - start_alg) / CLOCKS_PER_SEC;
+
+    cout << "  Total number of solutions: " << number_of_solution << endl;
+    cout << "  Temps d'initialisation des tâches: "
+         << task_initialization_time[iteration] << " secondes\n";
+    cout << "  Temps d'exécution de l'algorithme: " << algorithm_time[iteration]
+         << " secondes\n\n";
+
+    total_task_time += task_initialization_time[iteration];
+    total_algorithm_time += algorithm_time[iteration];
   }
 
-  stop = clock();
-
-  cout << "===Total number of solutions: " << number_of_solution
-       << "===" << endl;
-
-  CPU_time = double(stop - start) / CLOCKS_PER_SEC;
-
-  printf("Time: %lf seconds\n", CPU_time);
+  cout << "Temps moyen d'initialisation des tâches: " << total_task_time / 5.0
+       << " secondes\n";
+  cout << "Temps moyen d'exécution de l'algorithme: "
+       << total_algorithm_time / 5.0 << " secondes\n";
 
   return EXIT_SUCCESS;
 }

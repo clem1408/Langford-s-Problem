@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
-constexpr int N = 19;
+constexpr int N = 12;
 constexpr int DEPTH = 5;
 constexpr int SIZE = 2 * N;
 constexpr int MAX_STACK_SIZE = 1000000;
@@ -16,6 +16,7 @@ constexpr uint64_t PAIR_TEMPLATE[20] = {
     4097, 8193, 16385, 32769, 65537, 131073, 262145, 524289, 1048577, 2097153};
 
 using namespace std;
+using namespace std::chrono;
 
 struct StaticStack {
   array<uint64_t, MAX_STACK_SIZE> data;
@@ -148,41 +149,57 @@ uint64_t langford_algorithm(const uint64_t &task) {
 }
 
 int main() {
-  using namespace std;
-  using namespace std::chrono;
+  double task_initialization_time[5] = {0.0};
+  double algorithm_time[5] = {0.0};
+  double total_task_time = 0.0;
+  double total_algorithm_time = 0.0;
 
-  double CPU_time;
-  uint64_t number_of_solution = 0;
-  uint64_t number_of_tasks = numberOfTasks();
-  uint64_t real_number_of_tasks;
-  vector<uint64_t> tasks(number_of_tasks);
+  cout << "===== Langford de " << N << " avec une profondeur de " << DEPTH
+       << " =====" << endl
+       << endl;
 
-  cout << "N: " << N << "\nDEPTH: " << DEPTH << endl;
+  for (int iteration = 0; iteration < 5; ++iteration) {
+    uint64_t number_of_solution = 0;
+    uint64_t number_of_tasks = numberOfTasks();
+    uint64_t real_number_of_tasks;
+    vector<uint64_t> tasks(number_of_tasks);
 
-  real_number_of_tasks = initTasks(tasks);
+    // Mesure du temps d'initialisation des tâches
+    auto start_task = high_resolution_clock::now();
+    real_number_of_tasks = initTasks(tasks);
+    auto stop_task = high_resolution_clock::now();
+    task_initialization_time[iteration] =
+        duration<double>(stop_task - start_task).count();
 
-  // Début de la mesure de temps
-  auto start = high_resolution_clock::now();
+    cout << "  Total number of tasks: " << real_number_of_tasks << endl;
 
-  cout << "Total number of tasks: " << real_number_of_tasks << endl;
+    // Mesure du temps d'exécution de l'algorithme principal
+    auto start_alg = high_resolution_clock::now();
 
 #pragma omp parallel for reduction(+ : number_of_solution) schedule(dynamic)
-  for (size_t i = 0; i < real_number_of_tasks; ++i) {
-    uint64_t local_number_of_solution = 0;
-    local_number_of_solution += langford_algorithm(tasks[i]);
-    number_of_solution += local_number_of_solution;
+    for (size_t i = 0; i < real_number_of_tasks; ++i) {
+      uint64_t local_number_of_solution = 0;
+      local_number_of_solution += langford_algorithm(tasks[i]);
+      number_of_solution += local_number_of_solution;
+    }
+
+    auto stop_alg = high_resolution_clock::now();
+    algorithm_time[iteration] = duration<double>(stop_alg - start_alg).count();
+
+    cout << "  Total number of solutions: " << number_of_solution << endl;
+    cout << "  Temps d'initialisation des tâches: "
+         << task_initialization_time[iteration] << " secondes\n";
+    cout << "  Temps d'exécution de l'algorithme: " << algorithm_time[iteration]
+         << " secondes\n\n";
+
+    total_task_time += task_initialization_time[iteration];
+    total_algorithm_time += algorithm_time[iteration];
   }
 
-  // Fin de la mesure de temps
-  auto stop = high_resolution_clock::now();
-
-  cout << "===Total number of solutions: " << number_of_solution
-       << "===" << endl;
-
-  // Calcul du temps en secondes
-  CPU_time = duration<double>(stop - start).count();
-
-  cout << "Time: " << CPU_time << " seconds" << endl;
+  cout << "Temps moyen d'initialisation des tâches: " << total_task_time / 5.0
+       << " secondes\n";
+  cout << "Temps moyen d'exécution de l'algorithme: "
+       << total_algorithm_time / 5.0 << " secondes\n";
 
   return EXIT_SUCCESS;
 }
