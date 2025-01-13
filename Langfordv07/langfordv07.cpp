@@ -175,120 +175,123 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &id); // id du processus
     MPI_Comm_size(MPI_COMM_WORLD, &p);  // nb de processus
 
-    clock_t start = 0, stop = 0;
-    double CPU_time = 0;
+    if(id == 0){
+      cout << "===== Langford de " << N << " avec une profondeur de " << DEPTH << " =====" << endl;
+    }
 
-    int nb_tache_total = 0, nb_tache_bonus = 0, count_local = 0, count_global = 0, process_bonus = 0;
-    int nb_tache = 0;
 
-    vector<array<int, N>> solutions_global;
-    vector<int> solution_global_flat; // Tableau de solutions pour le send
-    vector<int> solution_local_flat;  // Tableau de solutions local pour le send
-    vector<array<int, N>> solutions_local; // Tableau de solutions local
+    for(int alpha = 0; alpha<5; alpha++){
 
-    vector<int> max_pos_tab_global = generateMaxPosTab(N);
+      clock_t start = 0, stop = 0, stop_init;
+      double CPU_time = 0, CPU_time_init;
 
-    /**
-     * Pour pouvoir choisir un nombre indéterminé de processus, on va plus pouvoir
-     * faire de scatter car ce ne sera plus équitable, le dernier process aura le
-     * reste des taches qui sera forcément inférieur à nb_tache_totale/p
-     */
-    if (id == p - 1) {
-        // Temps
-        cout << "N: " << N << "\nDEPTH: " << DEPTH << endl;
+      int nb_tache_total = 0, nb_tache_bonus = 0, count_local = 0, count_global = 0, process_bonus = 0;
+      int nb_tache = 0;
+
+      vector<array<int, N>> solutions_global;
+      vector<int> solution_global_flat; // Tableau de solutions pour le send
+      vector<int> solution_local_flat;  // Tableau de solutions local pour le send
+      vector<array<int, N>> solutions_local; // Tableau de solutions local
+
+      vector<int> max_pos_tab_global = generateMaxPosTab(N);
+
+      if(id == 0){
         start = clock();
+      }
 
-        generateCombinations(DEPTH, max_pos_tab_global, nb_tache_total, solutions_global);
+      /**
+       * Pour pouvoir choisir un nombre indéterminé de processus, on va plus pouvoir
+       * faire de scatter car ce ne sera plus équitable, le dernier process aura le
+       * reste des taches qui sera forcément inférieur à nb_tache_total/p
+       */
+      if (id == p - 1) {
+          generateCombinations(DEPTH, max_pos_tab_global, nb_tache_total, solutions_global);
 
-        cout << "Nombre total de tâches: " << nb_tache_total << endl;
+          for (const auto &arr : solutions_global) {
+              solution_global_flat.insert(solution_global_flat.end(), arr.begin(), arr.end());
+          }
+      }
 
-        for (const auto &arr : solutions_global) {
-            solution_global_flat.insert(solution_global_flat.end(), arr.begin(), arr.end());
-        }
-    }
+      MPI_Bcast(&nb_tache_total, 1, MPI_INT, p - 1, MPI_COMM_WORLD);
 
-    MPI_Bcast(&nb_tache_total, 1, MPI_INT, p - 1, MPI_COMM_WORLD);
+      if(id == 0){
+        stop_init = clock();
+      }
 
-    if (nb_tache_total % p == 0) {
-        nb_tache = nb_tache_total / p; // nombre des tâches pour tous les  process
-        nb_tache_bonus = 0;            // nombre de tâches du dernier process
-    } else {
-        process_bonus = nb_tache_total % p; // nombre de process qui auront une tâche de plus
-        nb_tache = (int)(nb_tache_total / p); // nombre des tâches pour tous les  process
-        nb_tache_bonus = nb_tache + 1; // nombre de tâches pour les x premier process qui ont 1 de plus
-    }
+      if (nb_tache_total % p == 0) {
+          nb_tache = nb_tache_total / p; // nombre des tâches pour tous les  process
+          nb_tache_bonus = 0;            // nombre de tâches du dernier process
+      } else {
+          process_bonus = nb_tache_total % p; // nombre de process qui auront une tâche de plus
+          nb_tache = (int)(nb_tache_total / p); // nombre des tâches pour tous les  process
+          nb_tache_bonus = nb_tache + 1; // nombre de tâches pour les x premier process qui ont 1 de plus
+      }
 
-    if (id == p - 1) {
-        cout << "Nb taches: " << nb_tache << endl;
-        cout << "Nb taches bonus: " << nb_tache_bonus << endl;
-        cout << "Nb process bonus: " << process_bonus << endl;
-        cout << "Taille vec global: " << solutions_global.size() << endl;
-        cout << "Taille vec global flat: " << solution_global_flat.size() << endl;
-    }
 
-    // init des tableaux des tâches
-    if (id < process_bonus) {
-        solution_local_flat.resize(nb_tache_bonus * N); // Tableau de solutions local pour le send
-        solutions_local.resize(nb_tache_bonus); // Tableau de solutions local
-    } else {
-        solution_local_flat.resize(nb_tache * N);    // Tableau de solutions local pour le send
-        solutions_local.resize(nb_tache); // Tableau de solutions local
-    }
+      // init des tableaux des tâches
+      if (id < process_bonus) {
+          solution_local_flat.resize(nb_tache_bonus * N); // Tableau de solutions local pour le send
+          solutions_local.resize(nb_tache_bonus); // Tableau de solutions local
+      } else {
+          solution_local_flat.resize(nb_tache * N);    // Tableau de solutions local pour le send
+          solutions_local.resize(nb_tache); // Tableau de solutions local
+      }
 
-    cout << "[" << id << "] t sol local flat: " << solution_local_flat.size() << endl;
 
-    // Envoi des taches aux process depuis le process p-1
-    if (id == p - 1) {
-        int k;
-        int start_send = 0;
 
-        for (k = 0; k < (p - 1); k++) {
+      // Envoi des taches aux process depuis le process p-1
+      if (id == p - 1) {
+          int k;
+          int start_send = 0;
 
-            if (k < p - 1) {
-                cout << "[" << k << "] start send: " << start_send << endl;
+          for (k = 0; k < (p - 1); k++) {
 
-                MPI_Send(&solution_global_flat[start_send], (k < process_bonus ? nb_tache_bonus : nb_tache) * N, MPI_INT, k, 0, MPI_COMM_WORLD);
-                start_send += ((k < process_bonus ? nb_tache_bonus : nb_tache) * N);
-            }
-        }
+              if (k < p - 1) {
 
-        copy(solution_global_flat.end() - ((p - 1) < process_bonus ? nb_tache_bonus : nb_tache) * N, solution_global_flat.end(), solution_local_flat.begin());
+                  MPI_Send(&solution_global_flat[start_send], (k < process_bonus ? nb_tache_bonus : nb_tache) * N, MPI_INT, k, 0, MPI_COMM_WORLD);
+                  start_send += ((k < process_bonus ? nb_tache_bonus : nb_tache) * N);
+              }
+          }
 
-    } else { // reception des taches des process
-        MPI_Recv(solution_local_flat.data(), (id < process_bonus ? nb_tache_bonus : nb_tache) * N, MPI_INT, p - 1, 0, MPI_COMM_WORLD, 0);
-    }
+          copy(solution_global_flat.end() - ((p - 1) < process_bonus ? nb_tache_bonus : nb_tache) * N, solution_global_flat.end(), solution_local_flat.begin());
 
-    cout << "[" << id << "]" << " recv, t local flat:" << solution_local_flat.size() << endl;
+      } else { // reception des taches des process
+          MPI_Recv(solution_local_flat.data(), (id < process_bonus ? nb_tache_bonus : nb_tache) * N, MPI_INT, p - 1, 0, MPI_COMM_WORLD, 0);
+      }
 
-    if (id < process_bonus) {
-        for (int i = 0; i < nb_tache_bonus; ++i) {
-            copy(solution_local_flat.begin() + i * N, solution_local_flat.begin() + (i + 1) * N, solutions_local[i].begin());
-        }
-    } else {
-        for (int i = 0; i < nb_tache; ++i) {
-            copy(solution_local_flat.begin() + i * N, solution_local_flat.begin() + (i + 1) * N, solutions_local[i].begin());
-        }
-    }
 
-    cout << "[" << id << "] t sol local: " << solutions_local.size() << endl;
+      if (id < process_bonus) {
+          for (int i = 0; i < nb_tache_bonus; ++i) {
+              copy(solution_local_flat.begin() + i * N, solution_local_flat.begin() + (i + 1) * N, solutions_local[i].begin());
+          }
+      } else {
+          for (int i = 0; i < nb_tache; ++i) {
+              copy(solution_local_flat.begin() + i * N, solution_local_flat.begin() + (i + 1) * N, solutions_local[i].begin());
+          }
+      }
 
-    // Langford
-    for (auto &solution : solutions_local) {
-        langford_algorithm(solution, max_pos_tab_global, count_local);
-    }
+      // Langford
+      for (auto &solution : solutions_local) {
+          langford_algorithm(solution, max_pos_tab_global, count_local);
+      }
 
-    MPI_Reduce(&count_local, &count_global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Reduce(&count_local, &count_global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    cout << "[" << id << "]" << " reduce" << endl;
 
-    // Affichage temps
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (id == 0) {
-        stop = clock();
-        CPU_time = double(stop - start) / CLOCKS_PER_SEC;
 
-        printf("Time : %lf seconds\n", CPU_time);
-        cout << "Nombre total de solutions: " << count_global << endl;
+      // Affichage temps
+      MPI_Barrier(MPI_COMM_WORLD);
+      if (id == 0) {
+          stop = clock();
+          CPU_time = double(stop - start) / CLOCKS_PER_SEC;
+          CPU_time_init = double(stop_init - start) / CLOCKS_PER_SEC;
+
+          cout << "Total number of tasks: " << nb_tache_total << endl;
+          cout << "Total number of solutions: " << count_global << endl;
+          cout << "Temps d'initialisation des tâches: " << CPU_time_init << endl;
+          cout << "Temps d'exécution de l'algorithme: " << CPU_time << endl; 
+      }
+
     }
 
     MPI_Finalize();
