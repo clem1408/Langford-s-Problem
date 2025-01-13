@@ -1,22 +1,22 @@
 #include <array>
-#include <chrono>
 #include <climits>
-#include <cstdint>
+#include <ctime>
 #include <iostream>
-#include <omp.h>
+#include <mpi.h>
 #include <unordered_set>
 #include <vector>
 
+using namespace std;
+
 constexpr int N = 12;
-constexpr int DEPTH = 5;
+constexpr int DEPTH = 2;
 constexpr int SIZE = 2 * N;
 constexpr int MAX_STACK_SIZE = 1000000;
 constexpr uint64_t PAIR_TEMPLATE[20] = {
     5,    9,    17,    33,    65,    129,    257,    513,    1025,    2049,
     4097, 8193, 16385, 32769, 65537, 131073, 262145, 524289, 1048577, 2097153};
 
-using namespace std;
-using namespace std::chrono;
+
 
 struct StaticStack {
   array<uint64_t, MAX_STACK_SIZE> data;
@@ -148,58 +148,123 @@ uint64_t langford_algorithm(const uint64_t &task) {
   return count;
 }
 
-int main() {
-  double task_initialization_time[5] = {0.0};
-  double algorithm_time[5] = {0.0};
-  double total_task_time = 0.0;
-  double total_algorithm_time = 0.0;
+int main(int argc, char *argv[]) {
 
-  cout << "===== Langford de " << N << " avec une profondeur de " << DEPTH
-       << " =====" << endl
-       << endl;
+    int id, p;
 
-  for (int iteration = 0; iteration < 5; ++iteration) {
-    uint64_t number_of_solution = 0;
-    uint64_t number_of_tasks = numberOfTasks();
-    uint64_t real_number_of_tasks;
-    vector<uint64_t> tasks(number_of_tasks);
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &id); // id du processus
+    MPI_Comm_size(MPI_COMM_WORLD, &p);  // nb de processus
 
-    // Mesure du temps d'initialisation des tâches
-    auto start_task = high_resolution_clock::now();
-    real_number_of_tasks = initTasks(tasks);
-    auto stop_task = high_resolution_clock::now();
-    task_initialization_time[iteration] =
-        duration<double>(stop_task - start_task).count();
+    clock_t start = 0, stop = 0;
+    double CPU_time = 0;
 
-    cout << "  Total number of tasks: " << real_number_of_tasks << endl;
+    uint64_t process_bonus = 0; // Range de process avec une tâche de plus, allant de 0 à process_bonus
 
-    // Mesure du temps d'exécution de l'algorithme principal
-    auto start_alg = high_resolution_clock::now();
+    uint64_t nb_tache_global = 0;
+    uint64_t nb_solution_global = 0;
 
-#pragma omp parallel for reduction(+ : number_of_solution) schedule(dynamic)
-    for (size_t i = 0; i < real_number_of_tasks; ++i) {
-      uint64_t local_number_of_solution = 0;
-      local_number_of_solution += langford_algorithm(tasks[i]);
-      number_of_solution += local_number_of_solution;
+    uint64_t nb_tache_local = 0;
+    uint64_t nb_tache_local_bonus = 0;
+    uint64_t nb_solution_local = 0;
+
+    vector<uint64_t> tab_tache_global;
+    vector<uint64_t> tab_tache_local;
+
+
+    // Générer tâches
+    if(id == p-1){
+
+        start = clock();
+
+        cout << "N: " << N << "\nDEPTH: " << DEPTH << endl;
+
+        uint64_t nb_tache_temp = numberOfTasks();
+        tab_tache_global.resize(nb_tache_temp);
+        nb_tache_global = initTasks(tab_tache_global);
+        tab_tache_global.resize(nb_tache_global);
+
+        cout << "nb_tache_global: " << nb_tache_global << endl;
     }
 
-    auto stop_alg = high_resolution_clock::now();
-    algorithm_time[iteration] = duration<double>(stop_alg - start_alg).count();
 
-    cout << "  Total number of solutions: " << number_of_solution << endl;
-    cout << "  Temps d'initialisation des tâches: "
-         << task_initialization_time[iteration] << " secondes\n";
-    cout << "  Temps d'exécution de l'algorithme: " << algorithm_time[iteration]
-         << " secondes\n\n";
+    MPI_Bcast(&nb_tache_global, 1, MPI_INT, p-1, MPI_COMM_WORLD);
 
-    total_task_time += task_initialization_time[iteration];
-    total_algorithm_time += algorithm_time[iteration];
-  }
 
-  cout << "Temps moyen d'initialisation des tâches: " << total_task_time / 5.0
-       << " secondes\n";
-  cout << "Temps moyen d'exécution de l'algorithme: "
-       << total_algorithm_time / 5.0 << " secondes\n";
+    /*  Vérification de si on a un nombre juste de processus pour diviser le nombre de tâches ou non.
+        Dans le cas où, le nb de process ne divise pas, alors les x premier process ont une tâche de plus. */
+    if (nb_tache_global % p == 0) { // Cas parfait
+        nb_tache_local = (uint64_t)(nb_tache_global / p);   // nombre des tâches pour tous les process
+        nb_tache_local_bonus = 0;                                 // nombre de tâches du dernier process
+    } else { // Cas où c'est non divisible
+        process_bonus = nb_tache_global % p;                // nombre de process qui auront une tâche de plus
+        nb_tache_local = (uint64_t)(nb_tache_global / p);   // nombre des tâches pour tous les process
+        nb_tache_local_bonus = nb_tache_local + 1;                // nombre de tâches pour les x premiers process qui ont 1 de plus
+    }
 
-  return EXIT_SUCCESS;
+
+    // Initialisation des vect de tâches locaux
+    if (id < process_bonus) { // Premiers process aec une tache de plus
+        tab_tache_local.resize(nb_tache_local_bonus); // Tableau de solutions local pour le send
+    } else {
+        tab_tache_local.resize(nb_tache_local);    // Tableau de solutions local pour le send
+    }
+
+
+    // Envoi des taches aux process depuis le process p-1
+    if (id == p - 1) {
+        uint64_t k;
+        uint64_t start_send = 0;
+
+        for (k = 0; k < (p - 1); k++) {
+
+            if (k < p - 1) {
+                cout << "[" << k << "] start send: " << start_send << endl;
+
+                MPI_Send(&tab_tache_global[start_send], (k < process_bonus ? nb_tache_local_bonus : nb_tache_local), MPI_UNSIGNED_LONG, k, 0, MPI_COMM_WORLD);
+                start_send += ((k < process_bonus ? nb_tache_local_bonus : nb_tache_local));
+            }
+        }
+
+        // Copie dans le vect local du dernier process de la fin du tableau de tâches
+        copy(tab_tache_global.end() - ((p - 1) < process_bonus ? nb_tache_local_bonus : nb_tache_local), tab_tache_global.end(), tab_tache_local.begin());
+
+    } else { // reception des taches des process
+        MPI_Recv(tab_tache_local.data(), (id < process_bonus ? nb_tache_local_bonus : nb_tache_local), MPI_UNSIGNED_LONG , p - 1, 0, MPI_COMM_WORLD, 0);
+    }
+
+
+    cout << "[" << id << "]" << " recv, t local flat:" << tab_tache_local.size() << endl;
+
+
+    // Langford
+    if (id < process_bonus) { // Premiers process aec une tache de plus
+        for (size_t i = 0; i < nb_tache_local_bonus; ++i) {
+            nb_solution_local += langford_algorithm(tab_tache_local[i]);
+        }
+    } else {
+        for (size_t i = 0; i < nb_tache_local; ++i) {
+            nb_solution_local += langford_algorithm(tab_tache_local[i]);
+        }
+    }
+
+    cout << "[" << id << "]" << " nb solution: " << nb_solution_local << endl;
+    
+    MPI_Reduce(&nb_solution_local, &nb_solution_global, 1, MPI_INT, MPI_SUM, p-1, MPI_COMM_WORLD);
+
+
+    // Affichage temps
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (id == p-1) {
+        stop = clock();
+        CPU_time = double(stop - start) / CLOCKS_PER_SEC;
+
+        printf("Time : %lf seconds\n", CPU_time);
+        cout << "Nombre total de solutions: " << nb_solution_global << endl;
+    }
+
+
+    MPI_Finalize();
+
+    return EXIT_SUCCESS;
 }

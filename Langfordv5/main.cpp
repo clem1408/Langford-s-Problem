@@ -1,159 +1,155 @@
-#include <array>
-#include <bitset>
-#include <climits>
-#include <cstdint>
-#include <ctime>
 #include <iostream>
-#include <stack>
+#include <omp.h>
+#include <time.h>
 #include <unordered_set>
 #include <vector>
 
-constexpr int N = 12;
-constexpr int DEPTH = 2;
-constexpr int SIZE = 2 * N;
-constexpr int MAX_STACK_SIZE = 1000000;
-constexpr uint64_t PAIR_TEMPLATE[20] = {
-    5,    9,    17,    33,    65,    129,    257,    513,    1025,    2049,
-    4097, 8193, 16385, 32769, 65537, 131073, 262145, 524289, 1048577, 2097153};
+#define N 12
+#define DEPTH 5
 
 using namespace std;
 
-struct StaticStack {
-  array<uint64_t, MAX_STACK_SIZE> data;
-  int top = -1;
+// Génère le tableau des positions maximales
+inline vector<int> generateMaxPosTab(int n) {
+  vector<int> max_pos_tab(n);
+  int max_pos = 2 * n - 2;
 
-  inline bool isEmpty() const { return top == -1; }
-  inline bool isFull() const { return top >= MAX_STACK_SIZE - 1; }
-
-  inline void push(uint64_t value) {
-    if (!isFull()) {
-      data[++top] = value;
-    } else {
-      cerr << "Erreur : pile pleine !" << endl;
-    }
+  for (int i = 0; i < n; i++) {
+    max_pos_tab[i] = max_pos--;
   }
 
-  inline uint64_t pop() {
-    if (!isEmpty()) {
-      return data[top--];
-    } else {
-      cerr << "Erreur : pile vide !" << endl;
-      return 0;
-    }
+  if (n % 2 == 0) {
+    max_pos_tab[n - 2] /= 2;
+  } else {
+    max_pos_tab[n - 1] /= 2;
   }
 
-  inline uint64_t peek() const {
-    if (!isEmpty()) {
-      return data[top];
-    } else {
-      cerr << "Erreur : pile vide !" << endl;
-      return -1;
-    }
-  }
-};
-
-inline constexpr uint64_t numberOfTasks() {
-  uint64_t number = 1;
-  for (int i = 2; i < 2 + DEPTH; ++i) {
-    number *= (2 * N - i);
-  }
-  return number;
+  return max_pos_tab;
 }
 
-inline uint64_t reverseBits(uint64_t n) {
-  n = ((n & 0xffffffff00000000) >> 32) | ((n & 0x00000000ffffffff) << 32);
-  n = ((n & 0xffff0000ffff0000) >> 16) | ((n & 0x0000ffff0000ffff) << 16);
-  n = ((n & 0xff00ff00ff00ff00) >> 8) | ((n & 0x00ff00ff00ff00ff) << 8);
-  n = ((n & 0xf0f0f0f0f0f0f0f0) >> 4) | ((n & 0x0f0f0f0f0f0f0f0f) << 4);
-  n = ((n & 0xcccccccccccccccc) >> 2) | ((n & 0x3333333333333333) << 2);
-  n = ((n & 0xaaaaaaaaaaaaaaaa) >> 1) | ((n & 0x5555555555555555) << 1);
+// Génère les combinaisons possibles jusqu'à une profondeur donnée et les stocke
+void generateCombinations(int depth, const vector<int> &max_pos_tab, int &count,
+                          vector<vector<int>> &solutions) {
+  vector<int> indices(depth, 1);
 
-  return n;
-}
+  while (true) {
+    unordered_set<int> uniqueValues(indices.begin(), indices.end());
+    bool isValid = ((int)uniqueValues.size() == depth);
+    bool isValid2 = true;
 
-uint64_t initTasks(vector<uint64_t> &tasks) {
-  StaticStack stack;
-  unordered_set<uint64_t> bitset;
-  int j = 0, level = N;
-  uint64_t temp;
+    for (int i = 0; i < depth && isValid; ++i) {
+      if (indices[i] > max_pos_tab[N - depth + i]) {
+        isValid = false;
+        break;
+      }
+    }
 
-  stack.push(level);
-  stack.push(0);
-
-  while (!stack.isEmpty()) {
-    temp = stack.pop();
-    level = stack.pop();
-
-    if (level > N - DEPTH) {
-      uint64_t state = PAIR_TEMPLATE[level - 1];
-
-      for (int i = 0; i < (SIZE - 1) - level; ++i) {
-        uint64_t test = state << i;
-
-        if ((temp & test) == 0) {
-          uint64_t new_temp = temp | test;
-
-          stack.push(level - 1);
-          stack.push(new_temp);
-
-          if (bitset.find(reverseBits(new_temp) >> (64 - SIZE)) ==
-              bitset.end()) {
-            bitset.insert(new_temp);
-
-            if (level - 1 == N - DEPTH) {
-              tasks[j] = new_temp;
-              j++;
-            }
-          }
+    if (isValid) {
+      vector<int> general_tab(2 * N, 0);
+      for (int i = N - DEPTH; i < N; ++i) {
+        if (general_tab[indices[i - (N - DEPTH)] - 1] == 0 &&
+            general_tab[indices[i - (N - DEPTH)] + i + 1] == 0) {
+          general_tab[indices[i - (N - DEPTH)] - 1] = i + 1;
+          general_tab[indices[i - (N - DEPTH)] + i + 1] = i + 1;
+        } else {
+          isValid2 = false;
+          break;
         }
       }
     }
-  }
 
-  return j;
+    if (isValid && isValid2) {
+      vector<int> solution(N, 0);
+      for (int i = 0; i < depth; ++i) {
+        solution[N - depth + i] = indices[i];
+      }
+
+#pragma omp critical
+      {
+        solutions.push_back(solution);
+        count++;
+      }
+    }
+
+    int position = depth - 1;
+    while (position >= 0) {
+      int maxVal = 2 * N - 2 - (N - depth + position);
+      if (indices[position] < maxVal) {
+        indices[position]++;
+        break;
+      } else {
+        indices[position] = 1;
+        position--;
+      }
+    }
+
+    if (position < 0)
+      break;
+  }
 }
 
-uint64_t langford_algorithm(const uint64_t &task) {
-  StaticStack stack;
-  int level = N - DEPTH, count = 0;
-  uint64_t temp;
+inline void remove_pair(vector<int> &langford, vector<int> &general_tab,
+                        int pair) {
+  general_tab[langford[pair - 1] - 1] = 0;
+  general_tab[langford[pair - 1] + pair] = 0;
+  langford[pair - 1] = 0;
+}
 
-  stack.push(level);
-  stack.push(task);
+inline int place_pair(vector<int> &langford, const vector<int> &max_pos_tab,
+                      vector<int> &general_tab, int pair) {
+  int i = (langford[pair - 1] != 0) ? langford[pair - 1] + 1 : 1;
 
-  while (!stack.isEmpty()) {
-    temp = stack.pop();
-    level = stack.pop();
+  if (langford[pair - 1] != 0) {
+    remove_pair(langford, general_tab, pair);
+  }
 
-    if (level > 0) {
-      uint64_t state = PAIR_TEMPLATE[level - 1];
-
-      for (int i = 0; i < (SIZE - 1) - level; ++i) {
-        uint64_t test = state << i;
-
-        if ((temp & test) == 0) {
-          uint64_t new_temp = temp | test;
-
-          stack.push(level - 1);
-          stack.push(new_temp);
-
-          if (level - 1 == 0) {
-            count++;
-          }
-        }
-      }
+  for (; i <= max_pos_tab[pair - 1]; i++) {
+    int second_pos = i + pair;
+    if (general_tab[i - 1] == 0 && general_tab[second_pos] == 0) {
+      general_tab[i - 1] = pair;
+      general_tab[second_pos] = pair;
+      langford[pair - 1] = i;
+      return 1;
     }
   }
 
-  return count;
+  return 0;
+}
+
+void init_general_tab(vector<int> &langford, vector<int> &general_tab) {
+  for (int i = N - DEPTH; i < N; i++) {
+    general_tab[langford[i] - 1] = i + 1;
+    general_tab[langford[i] + i + 1] = i + 1;
+  }
+}
+
+void langford_algorithm(vector<int> &langford, const vector<int> &max_pos_tab,
+                        int &local_count) {
+  int level = N - DEPTH;
+  vector<int> general_tab(2 * N, 0);
+  init_general_tab(langford, general_tab);
+
+  while (level <= N - DEPTH) {
+    if (place_pair(langford, max_pos_tab, general_tab, level)) {
+      if (level == 1) {
+        local_count++; // Incrémentation de la variable locale
+        remove_pair(langford, general_tab, 1);
+      } else {
+        level--;
+        continue;
+      }
+    }
+    level++;
+  }
 }
 
 int main() {
-  uint64_t number_of_solution = 0;
-  uint64_t number_of_tasks = numberOfTasks();
-  vector<uint64_t> tasks(number_of_tasks);
+  int count = 0;
+  int total_count2 = 0;
+  vector<int> max_pos_tab = generateMaxPosTab(N);
+  vector<vector<int>> solutions;
 
-  double task_initialization_time[5] = {0.0};
+  double task_generation_time[5] = {0.0};
   double algorithm_time[5] = {0.0};
   double total_task_time = 0.0;
   double total_algorithm_time = 0.0;
@@ -162,43 +158,67 @@ int main() {
        << " =====" << endl
        << endl;
 
-  for (int iteration = 0; iteration < 5; ++iteration) {
-    number_of_solution = 0;
+  for (int i = 0; i < 5; i++) {
+    count = 0;
+    total_count2 = 0;
+    solutions.clear();
 
-    // Mesure du temps d'initialisation des tâches
-    clock_t start_task, stop_task;
-    start_task = clock();
-    uint64_t real_number_of_tasks = initTasks(tasks);
-    stop_task = clock();
-    task_initialization_time[iteration] =
-        double(stop_task - start_task) / CLOCKS_PER_SEC;
+    double start_time, end_time;
 
-    cout << "Execution " << iteration + 1 << ":\n";
-    cout << "  Total number of tasks: " << real_number_of_tasks << endl;
+    // Mesure du temps de génération des tâches
+#ifdef _OPENMP
+    start_time = omp_get_wtime();
+#else
+    start_time = clock();
+#endif
+    generateCombinations(DEPTH, max_pos_tab, count, solutions);
+#ifdef _OPENMP
+    end_time = omp_get_wtime();
+    task_generation_time[i] = end_time - start_time;
+#else
+    end_time = clock();
+    task_generation_time[i] = (end_time - start_time) / CLOCKS_PER_SEC;
+#endif
+
+    cout << "Execution " << i + 1 << ":\n";
+    cout << "  Nombre total de tâches: " << count << endl;
 
     // Mesure du temps d'exécution de l'algorithme principal
-    clock_t start_alg, stop_alg;
-    start_alg = clock();
-    for (size_t i = 0; i < real_number_of_tasks; ++i) {
-      number_of_solution += langford_algorithm(tasks[i]);
-    }
-    stop_alg = clock();
-    algorithm_time[iteration] = double(stop_alg - start_alg) / CLOCKS_PER_SEC;
+#ifdef _OPENMP
+    start_time = omp_get_wtime();
+#else
+    start_time = clock();
+#endif
 
-    cout << "  Total number of solutions: " << number_of_solution << endl;
-    cout << "  Temps d'initialisation des tâches: "
-         << task_initialization_time[iteration] << " secondes\n";
-    cout << "  Temps d'exécution de l'algorithme: " << algorithm_time[iteration]
+#pragma omp parallel for reduction(+ : total_count2)
+    for (size_t j = 0; j < solutions.size(); j++) {
+      int local_count = 0;
+      langford_algorithm(solutions[j], max_pos_tab, local_count);
+      total_count2 += local_count;
+    }
+
+#ifdef _OPENMP
+    end_time = omp_get_wtime();
+    algorithm_time[i] = end_time - start_time;
+#else
+    end_time = clock();
+    algorithm_time[i] = (end_time - start_time) / CLOCKS_PER_SEC;
+#endif
+
+    cout << "  Nombre total de solutions: " << total_count2 << endl;
+    cout << "  Temps de génération des tâches: " << task_generation_time[i]
+         << " secondes\n";
+    cout << "  Temps d'exécution de l'algorithme: " << algorithm_time[i]
          << " secondes\n\n";
 
-    total_task_time += task_initialization_time[iteration];
-    total_algorithm_time += algorithm_time[iteration];
+    total_task_time += task_generation_time[i];
+    total_algorithm_time += algorithm_time[i];
   }
 
-  cout << "Temps moyen d'initialisation des tâches: " << total_task_time / 5.0
+  cout << "Temps moyen de génération des tâches: " << total_task_time / 5.0
        << " secondes\n";
   cout << "Temps moyen d'exécution de l'algorithme: "
        << total_algorithm_time / 5.0 << " secondes\n";
 
-  return EXIT_SUCCESS;
+  return 0;
 }

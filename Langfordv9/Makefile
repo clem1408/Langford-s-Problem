@@ -1,9 +1,10 @@
 # Makefile for main.cpp
 
 # Compiler and flags
-CXX := g++
-CXXFLAGS := -Wall -Wextra -Ofast -std=c++17 -L/libm-install-dir/lib -lm -fopenmp
-LDFLAGS := -ltbb  # Link the Intel TBB library
+# mpicc
+CXX := mpic++
+CXXFLAGS := -Wall -Wextra -Ofast -std=c++17 -Wcast-function-type
+LDFLAGS := -ltbb -L/libm-install-dir/lib -lm # Link the Intel TBB library
 
 # Target executable
 TARGET := main

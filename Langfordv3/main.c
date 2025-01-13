@@ -1,8 +1,7 @@
-
 /**
  * Algorithme de Langford
  * @author Clément Jourd'heuil
- * @version 1.0
+ * @version 2.0
  */
 
 #include "langford.h"
@@ -13,25 +12,24 @@
 #define N 12
 
 void init(langford_t *langford) {
-  langford->general_tab = malloc((2 * N + 1) * sizeof(int));
-  langford->pos_tab = malloc((N + 1) * sizeof(int));
+  langford->general_tab = calloc(2 * N + 1, sizeof(int));
+
+  langford->pos_tab = calloc(N + 1, sizeof(int));
+
   langford->max_pos_tab = malloc((N + 1) * sizeof(int));
-  for (int i = 1; i < 2 * N + 1; i++) {
-    langford->general_tab[i] = 0;
-  }
-  for (int i = 1; i < N + 1; i++) {
-    langford->pos_tab[i] = 0;
-  }
+
   langford->nbSolutions = 0;
+
   int max_pos = 2 * N - 2;
-  for (int i = 1; i < N + 1; i++) {
-    langford->max_pos_tab[i] = max_pos;
-    max_pos--;
+
+  for (int i = 1; i <= N; i++) {
+    langford->max_pos_tab[i] = max_pos--;
   }
+
   if (N % 2 == 0) {
-    langford->max_pos_tab[N - 1] = langford->max_pos_tab[N - 1] / 2;
+    langford->max_pos_tab[N - 1] /= (int)2;
   } else {
-    langford->max_pos_tab[N] = langford->max_pos_tab[N] / 2;
+    langford->max_pos_tab[N] /= (int)2;
   }
 }
 
@@ -53,57 +51,59 @@ void show_langford(langford_t *langford) {
   printf("\n");
 }
 
-void remove_pair(langford_t *langford, int pair) {
+inline void remove_pair(langford_t *langford, int pair) {
   langford->general_tab[langford->pos_tab[pair]] = 0;
   langford->general_tab[langford->pos_tab[pair] + pair + 1] = 0;
   langford->pos_tab[pair] = 0;
 }
 
-int place_pair(langford_t *langford, int pair) {
-  int i;
+int place_pair(langford_t *restrict langford, int pair) {
+  // Initialisation de i, selon si la paire est déjà placé ou non
+  int i = (langford->pos_tab[pair] != 0) ? langford->pos_tab[pair] + 1 : 1;
+
+  // Si la paire est déjà placée, on la retire
   if (langford->pos_tab[pair] != 0) {
-    i = langford->pos_tab[pair] + 1;
     remove_pair(langford, pair);
-  } else {
-    i = 1;
   }
-  while (langford->general_tab[i] != 0 ||
-         langford->general_tab[i + pair + 1] != 0)
-    i++;
-  if (i <= langford->max_pos_tab[pair]) {
-    langford->general_tab[i] = pair;
-    langford->general_tab[i + pair + 1] = pair;
-    langford->pos_tab[pair] = i;
-    return 1;
+
+  // Parcourir les positions possibles pour la paire
+  for (; i <= langford->max_pos_tab[pair]; i++) {
+    int second_pos = i + pair + 1; // Pré-calculer la seconde position
+    if (langford->general_tab[i] == 0 &&
+        langford->general_tab[second_pos] == 0) {
+      langford->general_tab[i] = pair;
+      langford->general_tab[second_pos] = pair;
+      langford->pos_tab[pair] = i;
+      return 1; // Placement valide
+    }
   }
-  return 0;
+
+  return 0; // Aucun emplacement valide trouvé
 }
 
 void langford_algorithm(langford_t *langford) {
   int level = N;
-  while (level != N + 1) {
-    if (place_pair(langford, level)) // Si placement paire valide
+
+  while (level <= N) {
+    if (place_pair(langford, level)) // Si placement de la paire valide
     {
-      if (level == 1) // Si on vient de trouver une solution
+      if (level == 1) // Si on arrive à placer le 1 (combinaison valide)
       {
-        remove_pair(langford, 1);
         langford->nbSolutions++;
-        level++;
+        remove_pair(langford, 1);
       } else // Sinon on continue de descendre
       {
         level--;
+        continue;
       }
-    } else // Si placement de paire pas valide on remonte
-    {
-      level++;
     }
+    level++; // On remonte
   }
 }
 
 int main(/*int argc, char *argv[]*/) {
   printf("===== Langford de %d ===== \n\n", N);
 
-  // Variable pour calculer les temps d'execution
   clock_t start, stop;
   double total_time[5];
   double average_time = 0.0;
@@ -116,7 +116,7 @@ int main(/*int argc, char *argv[]*/) {
     langford_algorithm(langford);
     stop = clock();
 
-    total_time[i] = (double)(stop - start) / CLOCKS_PER_SEC;
+    total_time[i] = ((double)(stop - start)) / CLOCKS_PER_SEC;
     average_time += total_time[i];
 
     printf("Execution %d:\n", i + 1);
