@@ -1,13 +1,15 @@
 #!/bin/bash
 
 # Vérification si l'exécutable existe
-if [ -n $2 ]; then
+if [ -n $1 ]; then
 
     echo "Compilation avec MPI"
     make
     echo "Exécution avec MPI"
-    mpirun --use-hwthread-cpus --allow-run-as-root --oversubscribe -n $2 ./$1 
+    mpirun --use-hwthread-cpus --allow-run-as-root --oversubscribe -n $1 ./main >> result.txt
+    echo "Clean des fichiers"
+    make clean
 
 else
-    echo "Erreur : Il manque le nombre de processus ou l'exécutable $1 n'existe pas ou ."
+    echo "Erreur : Il manque le nombre de processus."
 fi
