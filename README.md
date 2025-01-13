@@ -2,6 +2,8 @@ Collaborators: elcald & joshua_bouchat
 
 <hr></hr>
 
+--------------
+
 Langford's Problem
 Here are all the implementations I have developed with elcald to solve Langford's Problem:
 
