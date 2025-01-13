@@ -1,4 +1,3 @@
-
 /**
  * Algorithme de Langford
  * @author Clément Jourd'heuil

@@ -5,6 +5,7 @@
 #include <mpi.h>
 #include <unordered_set>
 #include <vector>
+#include <cstdint>
 
 using namespace std;
 

@@ -1,0 +1,40 @@
+N: 12
+DEPTH: 2
+[9] recv, t local flat:4
+[10] recv, t local flat:4
+nb_tache_global: 55
+[0] start send: 0
+[1] start send: 5
+[2] start send: 10
+[3] start send: 15
+[4] start send: 20
+[5] start send: 25
+[6] start send: 30
+[7] start send: 35
+[8] start send: 39
+[9] start send: 43
+[10] start send: 47
+[11] recv, t local flat:4
+[0] recv, t local flat:5
+[1] recv, t local flat:5
+[2] recv, t local flat:5
+[3] recv, t local flat:5
+[4] recv, t local flat:5
+[7] recv, t local flat:4
+[8] recv, t local flat:4
+[6] recv, t local flat:5
+[5] recv, t local flat:5
+[8] nb solution: 7942
+[1] nb solution: 8048
+[11] nb solution: 8924
+[3] nb solution: 9156
+[7] nb solution: 8716
+[0] nb solution: 7656
+[2] nb solution: 9240
+[4] nb solution: 10632
+[10] nb solution: 8020
+[5] nb solution: 9876
+[9] nb solution: 9110
+[6] nb solution: 10824
+Time : 0.058477 seconds
+Nombre total de solutions: 108144

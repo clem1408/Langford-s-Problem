@@ -1,4 +1,4 @@
-# Makefile for main.cpp
+# Makefile for langfordv04.cpp
 
 # Compiler and flags
 CXX := g++
@@ -6,10 +6,10 @@ CXXFLAGS := -Wall -Wextra -Ofast -std=c++17 -L/libm-install-dir/lib -lm
 LDFLAGS := -ltbb  # Link the Intel TBB library
 
 # Target executable
-TARGET := main
+TARGET := langfordv04
 
 # Source files
-SRC := main.cpp
+SRC := langfordv04.cpp
 
 # Object files
 OBJ := $(SRC:.cpp=.o)

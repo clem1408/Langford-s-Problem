@@ -1,0 +1,69 @@
+N: 12
+DEPTH: 3
+[2] t sol local flat: 504
+[3] t sol local flat: 504
+[4] t sol local flat: 492
+[5] t sol local flat: 492
+[6] t sol local flat: 492
+[7] t sol local flat: 492
+[9] t sol local flat: 492
+Nombre total de tâches: 496
+Nb taches: 41
+Nb taches bonus: 42
+Nb process bonus: 4
+Taille vec global: 496
+Taille vec global flat: 5952
+[11] t sol local flat: 492
+[0] start send: 0
+[8] t sol local flat: 492
+[1] t sol local flat: 504
+[0] t sol local flat: 504
+[10] t sol local flat: 492
+[0] recv, t local flat:504
+[0] t sol local: 42
+[1] start send: 504
+[1] recv, t local flat:504
+[1] t sol local: 42
+[2] start send: 1008
+[3] start send: 1512
+[4] start send: 2016
+[2] recv, t local flat:504
+[2] t sol local: 42
+[3] recv, t local flat:504
+[3] t sol local: 42
+[4] recv, t local flat:492
+[4] t sol local: 41
+[5] start send: 2508
+[5] recv, t local flat:492
+[5] t sol local: 41
+[6] start send: 3000
+[7] start send: 3492
+[8] start send: 3984
+[8] recv, t local flat:492
+[8] t sol local: 41
+[6] recv, t local flat:492
+[6] t sol local: 41
+[7] recv, t local flat:492
+[7] t sol local: 41
+[9] start send: 4476
+[9] recv, t local flat:492
+[9] t sol local: 41
+[10] start send: 4968
+[10] recv, t local flat:492
+[10] t sol local: 41
+[11] recv, t local flat:492
+[11] t sol local: 41
+[11] reduce
+[7] reduce
+[3] reduce
+[9] reduce
+[5] reduce
+[1] reduce
+[10] reduce
+[4] reduce
+[8] reduce
+[6] reduce
+[2] reduce
+[0] reduce
+Time : 0.532486 seconds
+Nombre total de solutions: 108144

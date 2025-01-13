@@ -1,4 +1,4 @@
-# Makefile for main.cpp
+# Makefile for langfordv09.cpp
 
 # Compiler and flags
 # mpicc
@@ -7,10 +7,10 @@ CXXFLAGS := -Wall -Wextra -Ofast -std=c++17 -Wcast-function-type
 LDFLAGS := -ltbb -L/libm-install-dir/lib -lm # Link the Intel TBB library
 
 # Target executable
-TARGET := main
+TARGET := langfordv09
 
 # Source files
-SRC := main.cpp
+SRC := langfordv09.cpp
 
 # Object files
 OBJ := $(SRC:.cpp=.o)

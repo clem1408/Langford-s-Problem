@@ -1,13 +1,11 @@
 #include <array>
-#include <climits>
 #include <ctime>
 #include <iostream>
-#include <mpi.h>
 #include <unordered_set>
 #include <vector>
 
-#define N 15
-#define DEPTH 4
+#define N 12
+#define DEPTH 2
 
 using namespace std;
 
@@ -31,7 +29,8 @@ inline vector<int> generateMaxPosTab(int n) {
 // Génère les combinaisons possibles jusqu'à une profondeur donnée et les stocke
 void generateCombinations(int depth, const vector<int> &max_pos_tab, int &count,
                           vector<array<int, N>> &solutions) {
-  vector<int> indices(depth, 1); // Indices de chaque position initialisés à 1
+  vector<int> indices(depth,
+                      1); // Indices de chaque position initialisés à 1
 
   while (true) {
     // Vérifie si la combinaison actuelle est consistante (sans doublons)
@@ -146,8 +145,7 @@ inline void init_general_tab(array<int, N> &langford,
 }
 
 inline void langford_algorithm(array<int, N> &langford,
-                               const vector<int> &max_pos_tab,
-                               int &count_local) {
+                               const vector<int> &max_pos_tab, int &count2) {
   int level = N - DEPTH;
   array<int, 2 * N> general_tab = {0};
 
@@ -156,7 +154,7 @@ inline void langford_algorithm(array<int, N> &langford,
   while (level <= N - DEPTH) {
     if (place_pair(langford, max_pos_tab, general_tab, level)) {
       if (level == 1) {
-        count_local++;
+        count2++;
         remove_pair(langford, general_tab, 1);
       } else {
         level--;
@@ -167,118 +165,59 @@ inline void langford_algorithm(array<int, N> &langford,
   }
 }
 
-int main(int argc, char *argv[]) {
+int main() {
+  int count = 0, count2 = 0;
+  vector<int> max_pos_tab = generateMaxPosTab(N);
+  vector<array<int, N>> solutions;
 
-  int id, p;
+  double task_generation_time[5] = {0.0};
+  double algorithm_time[5] = {0.0};
+  double total_task_time = 0.0;
+  double total_algorithm_time = 0.0;
 
-  MPI_Init(&argc, &argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &id); // id du processus
-  MPI_Comm_size(MPI_COMM_WORLD, &p);  // nb de processus
-
-  clock_t start = 0, stop = 0;
-  double CPU_time = 0;
-
-  int nb_tache_total = 0, count_local = 0, count_global = 0;
-  int t_bloc = 0;
-
-  vector<array<int, N>> solutions_global;
-  vector<int> solution_global_flat; // Tableau de solutions pour le scatter
-
-  vector<int> max_pos_tab_global = generateMaxPosTab(N);
-
-  if (id == 0) {
-    // Temps
-    cout << "N: " << N << "\nDEPTH: " << DEPTH << endl;
-    start = clock();
-
-    generateCombinations(DEPTH, max_pos_tab_global, nb_tache_total,
-                         solutions_global);
-    cout << "Nombre total de tâches: " << nb_tache_total << endl;
-
-    for (const auto &arr : solutions_global) {
-      solution_global_flat.insert(solution_global_flat.end(), arr.begin(),
-                                  arr.end());
-    }
-
-    if (solution_global_flat.size() % p != 0) {
-      cout << "Nb de process pas diviseur du nb de tâches." << endl;
-      MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-
-    if ((int)solution_global_flat.size() != (nb_tache_total / p) * N * p) {
-
-      cout << "global flat: " << solution_global_flat.size() << endl;
-      cout << "taille: " << (nb_tache_total / p) * N * p << endl;
-
-      cerr << "Erreur : Taille totale des données incorrecte pour le scatter."
-           << endl;
-      MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-
-    cout << "solutions global générées" << endl;
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  MPI_Bcast(&nb_tache_total, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  t_bloc = nb_tache_total / p;
-
-  vector<int> solution_local_flat(
-      t_bloc * N); // Tableau de solutions local pour le scatter
-
-  vector<array<int, N>> solutions_local(t_bloc); // Tableau de solutions local
-
-  cout << "[" << id << "] t sol local flat: " << solution_local_flat.size()
+  cout << "===== Langford de " << N << " avec une profondeur de " << DEPTH
+       << " =====" << endl
        << endl;
 
-  if (id == 0) {
-    cout << "Taille bloc: " << t_bloc << endl;
-    cout << "Taille vec global: " << solutions_global.size() << endl;
-    cout << "Taille vec global flat: " << solution_global_flat.size() << endl;
+  for (int i = 0; i < 5; i++) {
+    count = 0;
+    count2 = 0;
+    solutions.clear();
+
+    clock_t start_task, stop_task;
+    clock_t start_alg, stop_alg;
+
+    // Mesure du temps de génération des tâches
+    start_task = clock();
+    generateCombinations(DEPTH, max_pos_tab, count, solutions);
+    stop_task = clock();
+    task_generation_time[i] = double(stop_task - start_task) / CLOCKS_PER_SEC;
+
+    cout << "Execution " << i + 1 << ":\n";
+    cout << "  Nombre total de tâches: " << count << endl;
+
+    // Mesure du temps d'exécution de l'algorithme principal
+    start_alg = clock();
+    for (auto &solution : solutions) {
+      langford_algorithm(solution, max_pos_tab, count2);
+    }
+    stop_alg = clock();
+    algorithm_time[i] = double(stop_alg - start_alg) / CLOCKS_PER_SEC;
+
+    cout << "  Nombre total de solutions: " << count2 << endl;
+    cout << "  Temps de génération des tâches: " << task_generation_time[i]
+         << " secondes\n";
+    cout << "  Temps d'exécution de l'algorithme: " << algorithm_time[i]
+         << " secondes\n\n";
+
+    total_task_time += task_generation_time[i];
+    total_algorithm_time += algorithm_time[i];
   }
 
-  MPI_Scatter(solution_global_flat.data(), t_bloc * N, MPI_INT,
-              solution_local_flat.data(), t_bloc * N, MPI_INT, 0,
-              MPI_COMM_WORLD);
-  cout << "[" << id << "]" << " scatter" << endl;
+  cout << "Temps moyen de génération des tâches: " << total_task_time / 5.0
+       << " secondes\n";
+  cout << "Temps moyen d'exécution de l'algorithme: "
+       << total_algorithm_time / 5.0 << " secondes\n";
 
-  cout << "[" << id << "]" << " t local flat: " << solution_local_flat.size()
-       << endl;
-
-  if ((int)solution_local_flat.size() != t_bloc * N) {
-    cerr << "Erreur : Taille des données local flat incorrect." << endl;
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  }
-
-  for (int i = 0; i < t_bloc; ++i) {
-    copy(solution_local_flat.begin() + i * N,
-         solution_local_flat.begin() + (i + 1) * N, solutions_local[i].begin());
-  }
-
-  // Langford
-  for (auto &solution : solutions_local) {
-    langford_algorithm(solution, max_pos_tab_global, count_local);
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  MPI_Reduce(&count_local, &count_global, 1, MPI_INT, MPI_SUM, 0,
-             MPI_COMM_WORLD);
-
-  cout << "[" << id << "]" << " reduce" << endl;
-
-  // Affichage temps
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (id == 0) {
-    stop = clock();
-    CPU_time = double(stop - start) / CLOCKS_PER_SEC;
-
-    printf("Time : %lf seconds\n", CPU_time);
-    cout << "Nombre total de solutions: " << count_global << endl;
-  }
-
-  MPI_Finalize();
-
-  return EXIT_SUCCESS;
+  return 0;
 }

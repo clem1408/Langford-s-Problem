@@ -1,0 +1,34 @@
+===== Langford de 12 avec une profondeur de 2 =====
+
+Execution 1:
+  Total number of tasks: 55
+  Total number of solutions: 108144
+  Temps d'initialisation des tâches: 0.004453 secondes
+  Temps d'exécution de l'algorithme: 0.129604 secondes
+
+Execution 2:
+  Total number of tasks: 55
+  Total number of solutions: 108144
+  Temps d'initialisation des tâches: 6.8e-05 secondes
+  Temps d'exécution de l'algorithme: 0.149123 secondes
+
+Execution 3:
+  Total number of tasks: 55
+  Total number of solutions: 108144
+  Temps d'initialisation des tâches: 9e-05 secondes
+  Temps d'exécution de l'algorithme: 0.123592 secondes
+
+Execution 4:
+  Total number of tasks: 55
+  Total number of solutions: 108144
+  Temps d'initialisation des tâches: 6.7e-05 secondes
+  Temps d'exécution de l'algorithme: 0.137756 secondes
+
+Execution 5:
+  Total number of tasks: 55
+  Total number of solutions: 108144
+  Temps d'initialisation des tâches: 9.5e-05 secondes
+  Temps d'exécution de l'algorithme: 0.128741 secondes
+
+Temps moyen d'initialisation des tâches: 0.0009546 secondes
+Temps moyen d'exécution de l'algorithme: 0.133763 secondes

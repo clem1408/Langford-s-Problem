@@ -1,4 +1,3 @@
-
 /**
  * Algorithme de Langford récursif
  * @author Clément Jourd'heuil
@@ -79,7 +78,7 @@ int main() {
             free(tab);
         }
 
-        printf("\nTemps moyen sur 5 exécutions : %lf secondes\n", total_time / 5.0);
+        printf("Temps moyen sur 5 exécutions : %lf secondes\n", total_time / 5.0);
 
     } else {
         printf("Aucune solution possible pour n = %d (car n %% 4 != 0 et n %% 4 != 3).\n", N);

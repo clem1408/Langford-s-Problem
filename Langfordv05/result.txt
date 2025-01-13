@@ -1,0 +1,34 @@
+===== Langford de 12 avec une profondeur de 5 =====
+
+Execution 1:
+  Nombre total de tâches: 24335
+  Nombre total de solutions: 108144
+  Temps de génération des tâches: 0.0455629 secondes
+  Temps d'exécution de l'algorithme: 0.0790849 secondes
+
+Execution 2:
+  Nombre total de tâches: 24335
+  Nombre total de solutions: 108144
+  Temps de génération des tâches: 0.0417938 secondes
+  Temps d'exécution de l'algorithme: 0.0559528 secondes
+
+Execution 3:
+  Nombre total de tâches: 24335
+  Nombre total de solutions: 108144
+  Temps de génération des tâches: 0.0405198 secondes
+  Temps d'exécution de l'algorithme: 0.0488857 secondes
+
+Execution 4:
+  Nombre total de tâches: 24335
+  Nombre total de solutions: 108144
+  Temps de génération des tâches: 0.0409788 secondes
+  Temps d'exécution de l'algorithme: 0.0388759 secondes
+
+Execution 5:
+  Nombre total de tâches: 24335
+  Nombre total de solutions: 108144
+  Temps de génération des tâches: 0.0413736 secondes
+  Temps d'exécution de l'algorithme: 0.0452419 secondes
+
+Temps moyen de génération des tâches: 0.0420458 secondes
+Temps moyen d'exécution de l'algorithme: 0.0536083 secondes

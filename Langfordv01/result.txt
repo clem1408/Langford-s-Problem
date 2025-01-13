@@ -1,0 +1,18 @@
+===== Langford de 12 ===== 
+
+Itération 1 - Nombre total de solutions : 216288
+Itération 1 - Temps : 0.585013 secondes
+
+Itération 2 - Nombre total de solutions : 216288
+Itération 2 - Temps : 0.582994 secondes
+
+Itération 3 - Nombre total de solutions : 216288
+Itération 3 - Temps : 0.578920 secondes
+
+Itération 4 - Nombre total de solutions : 216288
+Itération 4 - Temps : 0.572807 secondes
+
+Itération 5 - Nombre total de solutions : 216288
+Itération 5 - Temps : 0.567019 secondes
+
+Temps moyen sur 5 exécutions : 0.577351 secondes

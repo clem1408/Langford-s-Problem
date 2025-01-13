@@ -1,0 +1,19 @@
+===== Langford de 12 ===== 
+
+Execution 1:
+  Number of total solutions: 108144
+  Time: 0.296680 seconds
+Execution 2:
+  Number of total solutions: 108144
+  Time: 0.293402 seconds
+Execution 3:
+  Number of total solutions: 108144
+  Time: 0.293985 seconds
+Execution 4:
+  Number of total solutions: 108144
+  Time: 0.297600 seconds
+Execution 5:
+  Number of total solutions: 108144
+  Time: 0.295203 seconds
+
+Average execution time: 0.295374 seconds
