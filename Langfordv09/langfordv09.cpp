@@ -220,7 +220,6 @@ int main(int argc, char *argv[]) {
         for (k = 0; k < (p - 1); k++) {
 
             if (k < p - 1) {
-                cout << "[" << k << "] start send: " << start_send << endl;
 
                 MPI_Send(&tab_tache_global[start_send], (k < process_bonus ? nb_tache_local_bonus : nb_tache_local), MPI_UNSIGNED_LONG, k, 0, MPI_COMM_WORLD);
                 start_send += ((k < process_bonus ? nb_tache_local_bonus : nb_tache_local));
@@ -235,8 +234,6 @@ int main(int argc, char *argv[]) {
     }
 
 
-    cout << "[" << id << "]" << " recv, t local flat:" << tab_tache_local.size() << endl;
-
 
     // Langford
     if (id < process_bonus) { // Premiers process aec une tache de plus
@@ -248,8 +245,6 @@ int main(int argc, char *argv[]) {
             nb_solution_local += langford_algorithm(tab_tache_local[i]);
         }
     }
-
-    cout << "[" << id << "]" << " nb solution: " << nb_solution_local << endl;
     
     MPI_Reduce(&nb_solution_local, &nb_solution_global, 1, MPI_INT, MPI_SUM, p-1, MPI_COMM_WORLD);
 
