@@ -25,7 +25,7 @@ To use any of the programs **except the MPI versions**, follow these steps:
 - Navigate to the desired folder.
 - Run the shell script.
 - View the results.
-- For example, to run Langfordv10:
+- For example, if we run Langfordv10:
 
 ```
 sh langfordv10.sh
