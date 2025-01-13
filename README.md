@@ -1,7 +1,7 @@
 *Collaborators : [elcald](https://github.com/ElCald) & [joshua_bouchat](https://github.com/JoshuaBOUCHAT)*
 
 # Langford-s-Problem
-Here are all the implementations I have developed to solve Langford's Problem.
+Here are all the implementations I have developed with [elcald](https://github.com/ElCald) to solve Langford's Problem.
 
 Langfordv01: [Sequential], recursive solution (symmetries are not managed ==> double the number of solutions)
 Langfordv02: [Sequential], unoptimized solution. <br>
