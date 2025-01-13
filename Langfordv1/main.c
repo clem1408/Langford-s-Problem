@@ -1,132 +1,89 @@
+
 /**
- * Algorithme de Langford
+ * Algorithme de Langford récursif
  * @author Clément Jourd'heuil
  * @version 1.0
  */
 
-#include "langford.h"
-#include "stdio.h"
-#include "stdlib.h"
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #define N 12
 
-void init(langford_t *langford) {
-  langford->general_tab = malloc((2 * N + 1) * sizeof(int));
-  langford->pos_tab = malloc((N + 1) * sizeof(int));
-  langford->max_pos_tab = malloc((N + 1) * sizeof(int));
-  for (int i = 1; i < 2 * N + 1; i++) {
-    langford->general_tab[i] = 0;
-  }
-  for (int i = 1; i < N + 1; i++) {
-    langford->pos_tab[i] = 0;
-  }
-  langford->nbSolutions = 0;
-  int max_pos = 2 * N - 2;
-  for (int i = 1; i < N + 1; i++) {
-    langford->max_pos_tab[i] = max_pos;
-    max_pos--;
-  }
-  if (N % 2 == 0) {
-    langford->max_pos_tab[N - 1] = langford->max_pos_tab[N - 1] / 2;
-  } else {
-    langford->max_pos_tab[N] = langford->max_pos_tab[N] / 2;
-  }
+inline bool est_valide(int *tab, int num, int pos) {
+  // Si on sort du tableau 
+  if (pos + num + 1 >= 2 * N)
+    return false;
+  // Si les emplacements sont disponibles on retoure true
+  if (tab[pos] == 0 && tab[pos + num + 1] == 0)
+    return true;
+  return false;
 }
 
-void show_langford(langford_t *langford) {
-  printf("Langford's array positions : ");
-  for (int i = 1; i < 2 * N + 1; i++) {
-    printf("%d ", langford->general_tab[i]);
+void langford(int *tab, int num, int *solutions) {
+  if (num == 0) {
+    // Si on essaie de placer une zéro, 
+    // c'est qu'on à une solution valide
+    (*solutions)++;
+    return;
   }
-  printf("\n");
-  printf("Array of pairs positions : ");
-  for (int i = 1; i < N + 1; i++) {
-    printf("%d ", langford->pos_tab[i]);
-  }
-  printf("\n");
-  printf("Array of maximum positions : ");
-  for (int i = 1; i < N + 1; i++) {
-    printf("%d ", langford->max_pos_tab[i]);
-  }
-  printf("\n");
-}
 
-void remove_pair(langford_t *langford, int pair) {
-  langford->general_tab[langford->pos_tab[pair]] = 0;
-  langford->general_tab[langford->pos_tab[pair] + pair + 1] = 0;
-  langford->pos_tab[pair] = 0;
-}
+  for (int i = 0; i < 2 * N; i++) {
+    if (est_valide(tab, num, i)) {
+      tab[i] = num;
+      tab[i + num + 1] = num;
 
-int place_pair(langford_t *langford, int pair) {
-  int i;
-  if (langford->pos_tab[pair] != 0) {
-    i = langford->pos_tab[pair] + 1;
-    remove_pair(langford, pair);
-  } else {
-    i = 1;
-  }
-  while (langford->general_tab[i] != 0 ||
-         langford->general_tab[i + pair + 1] != 0)
-    i++;
-  if (i <= langford->max_pos_tab[pair]) {
-    langford->general_tab[i] = pair;
-    langford->general_tab[i + pair + 1] = pair;
-    langford->pos_tab[pair] = i;
-    return 1;
-  }
-  return 0;
-}
+      // Appel récursif
+      langford(tab, num - 1, solutions);
 
-void langford_algorithm(langford_t *langford) {
-  int level = N;
-  while (level != N + 1) {
-    if (place_pair(langford, level)) // Si placement paire valide
-    {
-      if (level == 1) // Si on vient de trouver une solution
-      {
-        remove_pair(langford, 1);
-        langford->nbSolutions++;
-        level++;
-      } else // Sinon on continue de descendre
-      {
-        level--;
-      }
-    } else // Si placement de paire pas valide on remonte
-    {
-      level++;
+      // Backtracking
+      tab[i] = 0;
+      tab[i + num + 1] = 0;
     }
   }
 }
 
-int main(/*int argc, char *argv[]*/) {
-  printf("===== Langford de %d ===== \n\n", N);
+int main() {
+    printf("===== Langford de %d ===== \n\n", N);
 
-  // Variable pour calculer les temps d'execution
-  clock_t start, stop;
-  double total_time[5];
-  double average_time = 0.0;
+    clock_t start, stop;
+    double CPU_time[5] = {0.0};
+    double total_time = 0.0;
 
-  for (int i = 0; i < 5; i++) {
-    langford_t *langford = langford_create();
-    init(langford);
+    if (N % 4 == 0 || N % 4 == 3) {
+        for (int iteration = 0; iteration < 5; ++iteration) {
+            int *tab = calloc(2 * N, sizeof(int));
+            if (tab == NULL) {
+                perror("Erreur d'allocation mémoire pour tab");
+                return 1;
+            }
 
-    start = clock();
-    langford_algorithm(langford);
-    stop = clock();
+            int solutions = 0;
 
-    total_time[i] = (double)(stop - start) / CLOCKS_PER_SEC;
-    average_time += total_time[i];
+            start = clock();
+            langford(tab, N, &solutions);
+            stop = clock();
 
-    printf("Execution %d:\n", i + 1);
-    printf("  Number of total solutions: %d\n", langford->nbSolutions);
-    printf("  Time: %lf seconds\n", total_time[i]);
+            if (solutions == 0) {
+                printf("Aucune solution trouvée pour n = %d à l'itération %d.\n", N, iteration + 1);
+            } else {
+                printf("Itération %d - Nombre total de solutions : %d\n", iteration + 1, solutions);
+            }
 
-    langford_destroy(langford);
-  }
+            CPU_time[iteration] = ((double)(stop - start)) / CLOCKS_PER_SEC;
+            printf("Itération %d - Temps : %lf secondes\n\n", iteration + 1, CPU_time[iteration]);
 
-  average_time /= 5.0;
-  printf("\nAverage execution time: %lf seconds\n", average_time);
+            total_time += CPU_time[iteration];
+            free(tab);
+        }
 
-  return 0;
+        printf("\nTemps moyen sur 5 exécutions : %lf secondes\n", total_time / 5.0);
+
+    } else {
+        printf("Aucune solution possible pour n = %d (car n %% 4 != 0 et n %% 4 != 3).\n", N);
+    }
+
+    return 0;
 }

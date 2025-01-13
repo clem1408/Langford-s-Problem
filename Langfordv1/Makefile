@@ -9,7 +9,8 @@ LDFLAGS := -ltbb  # Link the Intel TBB library
 TARGET := main 
 
 # Source files
-SRC := main.c langford.c
+SRC := main.c 
+
 
 # Object files
 OBJ := $(SRC:.c=.o)
